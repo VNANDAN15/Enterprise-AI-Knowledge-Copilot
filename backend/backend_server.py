@@ -109,6 +109,26 @@ def initialize_models():
     if _models_loaded or request.method == "OPTIONS":
         return
         
+    # ==========================================
+# LAZY LOADING RAG MODELS
+# ==========================================
+embedding_model = None
+all_chunks = []
+vector_store = None
+_models_loaded = False
+
+@app.before_request
+def initialize_models():
+    """
+    This function waits until the FIRST API request hits the server.
+    It prevents Gunicorn from crashing during the initial boot sequence.
+    """
+    global embedding_model, all_chunks, vector_store, _models_loaded
+    
+    # Skip if models are already loaded, or if it is a CORS preflight request
+    if _models_loaded or request.method == "OPTIONS":
+        return
+        
     print("Initializing RAG Engine (Lazy Load on first request)...")
     embedding_model = EmbeddingModel()
     all_chunks = load_chunks()
@@ -123,6 +143,8 @@ def initialize_models():
         print("Vector database is empty. Awaiting document uploads.")
         
     _models_loaded = True
+        
+    
 
 
 
