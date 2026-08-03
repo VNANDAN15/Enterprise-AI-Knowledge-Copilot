@@ -89,21 +89,42 @@ def load_chunks():
 def save_chunks(chunks):
     with open(CHUNKS_FILE, "w") as f:
         json.dump(chunks, f, indent=2)
+# ==========================================
+# LAZY LOADING RAG MODELS
+# ==========================================
+embedding_model = None
+all_chunks = []
+vector_store = None
+_models_loaded = False
+
+@app.before_request
+def initialize_models():
+    """
+    This function waits until the FIRST API request hits the server.
+    It prevents Gunicorn from crashing during the initial boot sequence.
+    """
+    global embedding_model, all_chunks, vector_store, _models_loaded
+    
+    # Skip if models are already loaded, or if it is just a CORS preflight request
+    if _models_loaded or request.method == "OPTIONS":
+        return
+        
+    print("Initializing RAG Engine (Lazy Load on first request)...")
+    embedding_model = EmbeddingModel()
+    all_chunks = load_chunks()
+    vector_store = VectorStore(384)
+
+    if all_chunks:
+        print(f"Loading {len(all_chunks)} chunks into FAISS vector database...")
+        embeddings = [c["embedding"] for c in all_chunks]
+        vector_store.add_embeddings(embeddings)
+        print("Vector database loaded successfully!")
+    else:
+        print("Vector database is empty. Awaiting document uploads.")
+        
+    _models_loaded = True
 
 
-# Initialize global RAG models
-print("Initializing RAG Engine...")
-embedding_model = EmbeddingModel()
-all_chunks = load_chunks()
-vector_store = VectorStore(384)
-
-if all_chunks:
-    print(f"Loading {len(all_chunks)} chunks into FAISS vector database...")
-    embeddings = [c["embedding"] for c in all_chunks]
-    vector_store.add_embeddings(embeddings)
-    print("Vector database loaded successfully!")
-else:
-    print("Vector database is empty. Awaiting document uploads.")
 
 
 def save_message_to_history(chat_id, message_obj):
