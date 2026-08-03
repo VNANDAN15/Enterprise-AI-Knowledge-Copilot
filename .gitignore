@@ -1,0 +1,28 @@
+# Environment & Secrets
+.env
+*.env
+
+# Python
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+
+# Uploaded Files & Temporary DBs
+data/uploads/
+backend/data/uploads/
+vector_db/*.json
+backend/vector_db/*.json
+
+# IDE & OS
+.vscode/
+.DS_Store
+Thumbs.db
