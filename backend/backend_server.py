@@ -89,27 +89,9 @@ def load_chunks():
 def save_chunks(chunks):
     with open(CHUNKS_FILE, "w") as f:
         json.dump(chunks, f, indent=2)
-# ==========================================
-# LAZY LOADING RAG MODELS
-# ==========================================
-embedding_model = None
-all_chunks = []
-vector_store = None
-_models_loaded = False
 
-@app.before_request
-def initialize_models():
-    """
-    This function waits until the FIRST API request hits the server.
-    It prevents Gunicorn from crashing during the initial boot sequence.
-    """
-    global embedding_model, all_chunks, vector_store, _models_loaded
-    
-    # Skip if models are already loaded, or if it is just a CORS preflight request
-    if _models_loaded or request.method == "OPTIONS":
-        return
         
-    # ==========================================
+# ==========================================
 # LAZY LOADING RAG MODELS
 # ==========================================
 embedding_model = None
@@ -145,9 +127,6 @@ def initialize_models():
     _models_loaded = True
         
     
-
-
-
 
 def save_message_to_history(chat_id, message_obj):
     chats = load_chats()
